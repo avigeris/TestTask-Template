@@ -23,7 +23,8 @@ namespace CSharpTest
             if (!object.ReferenceEquals(null, weekEnds))
             {
                 DateTime resultDate = startDate;
-                foreach (WeekEnd weekEnd in weekEnds)
+                IEnumerable<WeekEnd> we = weekEnds.OrderBy(weekend => weekend.StartDate);
+                foreach (WeekEnd weekEnd in we)
                 {
                     if (object.ReferenceEquals(null, weekEnd))
                     {
@@ -35,15 +36,40 @@ namespace CSharpTest
                         throw new ArgumentException();
                     }
 
-                    int daysBeforeWeekEnd = (weekEnd.StartDate - resultDate).Days;
-                    if (dayCount > daysBeforeWeekEnd)
+                    // if weekend starts earlier than the current date
+                    if (weekEnd.StartDate <= resultDate)
                     {
-                        dayCount -= daysBeforeWeekEnd;
-                        resultDate = weekEnd.EndDate;
+                        // if weekend ends after current date go to the weekend end 
+                        if (weekEnd.EndDate > resultDate)
+                        {
+                            resultDate = weekEnd.EndDate;
+                        }
                     }
-                    else
+                    else //weekend starts after current date
                     {
-                        return resultDate.AddDays(dayCount);
+
+                        //calc days before next weekend
+                        int daysBeforeWeekEnd = (weekEnd.StartDate - resultDate).Days;
+
+                        //check if its one day weekend
+                        if (weekEnd.StartDate.Equals(weekEnd.EndDate))
+                        {
+                            daysBeforeWeekEnd -= 1;
+                        }
+
+                        if (dayCount > daysBeforeWeekEnd)
+                        {
+                            dayCount -= daysBeforeWeekEnd;
+                            resultDate = weekEnd.EndDate;
+                            if (dayCount == 0)
+                            {
+                                return resultDate;
+                            }
+                        }
+                        else
+                        {
+                            return resultDate.AddDays(dayCount);
+                        }
                     }
                 }
                 return resultDate.AddDays(dayCount);
